@@ -1,103 +1,107 @@
 -- UI Library
 local UI = {}
 
--- Create a new UI Frame (Container)
-function UI.CreateFrame(parent, size, position, backgroundColor, borderRadius)
+-- Create a new frame
+function UI:createFrame(parent, size, position, backgroundColor)
     local frame = Instance.new("Frame")
     frame.Size = size
     frame.Position = position
-    frame.BackgroundColor3 = backgroundColor
-    frame.BorderSizePixel = 0
-    frame.BackgroundTransparency = 0.3
+    frame.BackgroundColor3 = backgroundColor or Color3.fromRGB(255, 255, 255)
     frame.Parent = parent
-
-    if borderRadius then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, borderRadius)
-        corner.Parent = frame
-    end
-    
     return frame
 end
 
--- Create a Button
-function UI.CreateButton(parent, size, position, text, callback)
+-- Create a new button
+function UI:createButton(parent, size, position, text, onClick)
     local button = Instance.new("TextButton")
     button.Size = size
     button.Position = position
     button.Text = text
+    button.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 18
+    button.TextSize = 20
     button.Parent = parent
 
-    button.MouseButton1Click:Connect(function()
-        if callback then callback() end
-    end)
-    
+    button.MouseButton1Click:Connect(onClick)
+
     return button
 end
 
--- Create a Toggle Switch
-function UI.CreateToggle(parent, size, position, text, defaultState, callback)
-    local toggleFrame = UI.CreateFrame(parent, size, position, Color3.fromRGB(35, 35, 35), 5)
-    local label = Instance.new("TextLabel")
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Size = UDim2.new(0.5, 0, 1, 0)
-    label.Parent = toggleFrame
+-- Create a toggle switch
+function UI:createToggle(parent, size, position, label, onToggle)
+    local toggle = Instance.new("Frame")
+    toggle.Size = size
+    toggle.Position = position
+    toggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    toggle.Parent = parent
 
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0.5, 0, 1, 0)
-    toggle.Position = UDim2.new(0.5, 0, 0, 0)
-    toggle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    toggle.Text = ""
-    toggle.Parent = toggleFrame
-    
-    toggle.MouseButton1Click:Connect(function()
-        defaultState = not defaultState
-        toggle.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if callback then callback(defaultState) end
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    textLabel.Position = UDim2.new(0, 0, 0, 0)
+    textLabel.Text = label
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextSize = 20
+    textLabel.BackgroundTransparency = 1
+    textLabel.Parent = toggle
+
+    local switch = Instance.new("TextButton")
+    switch.Size = UDim2.new(0, 50, 0, 25)
+    switch.Position = UDim2.new(0, 100, 0, 0)
+    switch.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    switch.Text = "ON"
+    switch.TextColor3 = Color3.fromRGB(255, 255, 255)
+    switch.Parent = toggle
+
+    local isOn = true
+
+    switch.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        if isOn then
+            switch.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+            switch.Text = "ON"
+        else
+            switch.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            switch.Text = "OFF"
+        end
+        if onToggle then
+            onToggle(isOn)
+        end
     end)
-    
-    return toggleFrame
+
+    return toggle
 end
 
--- Create Tabs (Basic Tab System)
-function UI.CreateTabSystem(parent, tabNames)
-    local tabContainer = UI.CreateFrame(parent, UDim2.new(0, 400, 0, 300), UDim2.new(0.5, -200, 0.5, -150), Color3.fromRGB(40, 40, 40), 10)
-    local tabButtonsFrame = UI.CreateFrame(tabContainer, UDim2.new(1, 0, 0, 50), UDim2.new(0, 0, 0, 0), Color3.fromRGB(30, 30, 30), 0)
-    local contentFrame = UI.CreateFrame(tabContainer, UDim2.new(1, 0, 1, -50), UDim2.new(0, 0, 0, 50), Color3.fromRGB(60, 60, 60), 10)
+-- Create a text box
+function UI:createTextBox(parent, size, position, placeholder, onChanged)
+    local textBox = Instance.new("TextBox")
+    textBox.Size = size
+    textBox.Position = position
+    textBox.PlaceholderText = placeholder
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    textBox.TextSize = 20
+    textBox.Parent = parent
 
-    local activeTab
-    local function setActiveTab(index)
-        if activeTab then
-            activeTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    textBox.FocusLost:Connect(function()
+        if onChanged then
+            onChanged(textBox.Text)
         end
-        activeTab = tabButtonsFrame:FindFirstChild(tabNames[index])
-        activeTab.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        
-        -- Update content based on the selected tab
-        -- You can customize the content frame for each tab
-        contentFrame:ClearAllChildren()
-        local contentLabel = Instance.new("TextLabel")
-        contentLabel.Text = "Content of " .. tabNames[index]
-        contentLabel.Size = UDim2.new(1, 0, 1, 0)
-        contentLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        contentLabel.BackgroundTransparency = 1
-        contentLabel.Parent = contentFrame
-    end
+    end)
 
-    -- Create buttons for tabs
-    for i, tabName in ipairs(tabNames) do
-        local button = UI.CreateButton(tabButtonsFrame, UDim2.new(0, 100, 0, 50), UDim2.new(0, (i - 1) * 100, 0, 0), tabName, function()
-            setActiveTab(i)
-        end)
-    end
+    return textBox
+end
 
-    -- Set default active tab
-    setActiveTab(1)
+-- Create a label
+function UI:createLabel(parent, size, position, text)
+    local label = Instance.new("TextLabel")
+    label.Size = size
+    label.Position = position
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.TextSize = 20
+    label.Parent = parent
+    return label
 end
 
 return UI
